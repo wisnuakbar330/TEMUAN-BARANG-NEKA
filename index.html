@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindIt AI - Laporan Barang Hilang & Temuan Sekolah</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Header & Navigation Bar -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-indigo-700 p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-robot text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl tracking-wide flex items-center gap-2">
+                        FindIt <span class="bg-indigo-500 text-xs px-2 py-0.5 rounded-full text-indigo-100 font-normal">AI Powered</span>
+                    </h1>
+                    <p class="text-xs text-indigo-200">Sistem Laporan Barang Hilang & Temuan Sekolah</p>
+                </div>
+            </div>
+
+            <!-- Role Selector & Status Bar -->
+            <div class="flex items-center space-x-3 bg-indigo-800/60 p-1.5 rounded-xl border border-indigo-500/40">
+                <i class="fa-solid fa-user-gear text-indigo-300 ml-2"></i>
+                <span class="text-xs font-medium text-indigo-100 hidden sm:inline">Akses Sebagai:</span>
+                <select id="userRole" onchange="changeRole()" class="bg-indigo-900 text-white text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 border border-indigo-600 cursor-pointer">
+                    <option value="Siswa Kelas 10">Siswa - Kelas 10</option>
+                    <option value="Siswa Kelas 11">Siswa - Kelas 11</option>
+                    <option value="Siswa Kelas 12">Siswa - Kelas 12</option>
+                    <option value="Guru BK">Guru BK / Tim Kesiswaan</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- BK Indicator Banner (Tampil Khusus Guru BK) -->
+    <div id="bkBanner" class="hidden bg-amber-500 text-slate-900 px-4 py-2 font-semibold text-xs text-center shadow-inner flex items-center justify-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Mode Administrator Guru BK Aktif: Anda memiliki akses penuh untuk memverifikasi klaim dan mengelola laporan.</span>
+    </div>
+
+    <!-- Main Content Layout -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Sidebar: Form Input & Navigation Tabs -->
+        <section class="lg:col-span-4 space-y-6">
+            
+            <!-- Navigation Tabs -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex space-x-1">
+                <button onclick="switchTab('lapor')" id="tabLapor" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
+                    <i class="fa-solid fa-pen-to-square"></i> Buat Laporan
+                </button>
+                <button onclick="switchTab('pencocokan')" id="tabMatch" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center justify-center gap-2 relative">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i> AI Match
+                    <span id="matchBadge" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                </button>
+                <button onclick="switchTab('statistik')" id="tabStat" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> Statistik
+                </button>
+            </div>
+
+            <!-- Form Laporan Section -->
+            <div id="sectionForm" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-indigo-600"></i> Form Laporan Barang
+                </h2>
+                <form id="reportForm" onsubmit="submitReport(event)" class="space-y-4">
+                    
+                    <!-- Jenis Laporan -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Laporan</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="reportType" value="Hilang" checked class="peer sr-only">
+                                <div class="p-2 text-center border rounded-xl text-xs font-semibold peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-600 border-slate-200 text-slate-600 transition">
+                                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Barang Hilang
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="reportType" value="Temuan" class="peer sr-only">
+                                <div class="p-2 text-center border rounded-xl text-xs font-semibold peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-600 border-slate-200 text-slate-600 transition">
+                                    <i class="fa-solid fa-hand-holding-heart mr-1"></i> Barang Temuan
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Nama Pelapor & Kelas Auto fill -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Pelapor</label>
+                            <input type="text" id="reporterName" required placeholder="Nama Anda" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Kelas / Unit</label>
+                            <input type="text" id="reporterClass" readonly class="w-full px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-medium">
+                        </div>
+                    </div>
+
+                    <!-- Nama Barang -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Barang</label>
+                        <input type="text" id="itemName" required placeholder="Contoh: Tupperware Biru, Kunci Motor Honda" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <!-- Kategori & Lokasi -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
+                            <select id="itemCategory" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="Elektronik">Elektronik</option>
+                                <option value="Botol/Tempat Makan">Botol / Botol Makan</option>
+                                <option value="Pakaian/Jaket">Pakaian / Jaket</option>
+                                <option value="Dokumen/Kartu">Kartu / Dokumen</option>
+                                <option value="Kunci">Kunci</option>
+                                <option value="Alat Tulis/Buku">Alat Tulis / Buku</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Lokasi Kejadian</label>
+                            <select id="itemLocation" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="Kantin Sekolah">Kantin Sekolah</option>
+                                <option value="Lapangan Olahraga">Lapangan Olahraga</option>
+                                <option value="Perpustakaan">Perpustakaan</option>
+                                <option value="Masjid/Musholla">Masjid / Musholla</option>
+                                <option value="Gedung Kelas 10">Gedung Kelas 10</option>
+                                <option value="Gedung Kelas 11">Gedung Kelas 11</option>
+                                <option value="Gedung Kelas 12">Gedung Kelas 12</option>
+                                <option value="Laboratorium Komputer">Lab Komputer</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Detail -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Deskripsi Detail & Ciri-Ciri Khusus</label>
+                        <textarea id="itemDesc" rows="3" required onkeyup="generateAutoTags()" placeholder="Jelaskan warna, stiker, gantung kunci, merk, atau ciri khas lainnya..." class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- AI Auto Tagging Preview -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-indigo-600 mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-tags"></i> AI Auto-Tags (Ekstraksi Otomatis):
+                        </label>
+                        <div id="tagContainer" class="flex flex-wrap gap-1 min-h-[28px] p-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="text-[10px] text-slate-400 italic px-1">Ketik deskripsi untuk generate tag otomatis...</span>
+                        </div>
+                    </div>
+
+                    <!-- Upload Foto (Simulasi) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Foto Barang (Opsional)</label>
+                        <input type="file" id="itemImage" accept="image/*" onchange="previewImage(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <div id="imagePreviewContainer" class="mt-2 hidden">
+                            <img id="imagePreview" src="#" alt="Preview" class="h-24 w-full object-cover rounded-xl border border-slate-200">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-200 shadow-md hover:shadow-indigo-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Laporan
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right Main Panel: Display Reports, Matches & Stats -->
+        <section class="lg:col-span-8 space-y-6">
+
+            <!-- Search & Filter Bar -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div class="relative w-full md:w-2/3">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" onkeyup="renderData()" placeholder="Cari berdasarkan nama barang, ciri khas, atau lokasi..." class="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <select id="filterType" onchange="renderData()" class="w-1/2 md:w-auto px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                        <option value="Semua">Semua Status</option>
+                        <option value="Hilang">Hanya Barang Hilang</option>
+                        <option value="Temuan">Hanya Barang Temuan</option>
+                        <option value="Selesai">Selesai / Terklaim</option>
+                    </select>
+                    <select id="filterCategory" onchange="renderData()" class="w-1/2 md:w-auto px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                        <option value="Semua">Semua Kategori</option>
+                        <option value="Elektronik">Elektronik</option>
+                        <option value="Botol/Tempat Makan">Botol/Tempat Makan</option>
+                        <option value="Pakaian/Jaket">Pakaian/Jaket</option>
+                        <option value="Dokumen/Kartu">Dokumen/Kartu</option>
+                        <option value="Kunci">Kunci</option>
+                        <option value="Alat Tulis/Buku">Alat Tulis/Buku</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TAB 1: Feed Daftar Laporan Barang -->
+            <div id="tabContentLapor" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-indigo-600"></i> Daftar Laporan Terkini
+                    </h3>
+                    <span id="totalItemsBadge" class="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-full">0 Barang</span>
+                </div>
+                
+                <!-- Container Cards -->
+                <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Cards injection via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 2: AI Match Panel (Pencocokan Kecerdasan Buatan) -->
+            <div id="tabContentPencocokan" class="hidden space-y-4">
+                <div class="bg-indigo-900 text-white p-5 rounded-2xl shadow-sm relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="font-bold text-base mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> AI Smart Matching Algorithm
+                        </h3>
+                        <p class="text-xs text-indigo-200 max-w-xl">
+                            Algoritma menganalisis kemiripan deskripsi, kategori, lokasi, dan auto-tags secara otomatis untuk membandingkan laporan Barang Hilang dengan Barang Temuan.
+                        </p>
+                    </div>
+                    <i class="fa-solid fa-brain absolute right-[-20px] bottom-[-20px] text-8xl text-indigo-800/40 pointer-events-none"></i>
+                </div>
+
+                <div id="aiMatchContainer" class="space-y-4">
+                    <!-- AI Matches injected via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 3: Dashboard Statistik & Laporan Guru BK -->
+            <div id="tabContentStatistik" class="hidden space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                        <p class="text-xs text-slate-500 font-medium">Total Laporan</p>
+                        <p id="statTotal" class="text-2xl font-black text-indigo-600 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                        <p class="text-xs text-slate-500 font-medium">Barang Hilang</p>
+                        <p id="statHilang" class="text-2xl font-black text-rose-500 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                        <p class="text-xs text-slate-500 font-medium">Barang Temuan</p>
+                        <p id="statTemuan" class="text-2xl font-black text-emerald-500 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                        <p class="text-xs text-slate-500 font-medium">Berhasil Selesai</p>
+                        <p id="statSelesai" class="text-2xl font-black text-amber-500 mt-1">0</p>
+                    </div>
+                </div>
+
+                <!-- Export Data & Management (Khusus Guru BK/Kesiswaan) -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Aksi Manajerial Guru BK</h4>
+                    <p class="text-xs text-slate-500">Ekspor seluruh rekapan data dalam bentuk file JSON atau setel ulang basis data simulasi.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportData()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-export"></i> Ekspor Data JSON
+                        </button>
+                        <button onclick="resetData()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-rotate-right"></i> Reset Data Contoh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Floating AI Chatbot Widget -->
+    <div class="fixed bottom-5 right-5 z-50">
+        <!-- Chat Toggle Button -->
+        <button id="chatToggleBtn" onclick="toggleChatbot()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-3.5 rounded-full shadow-2xl transition duration-300 flex items-center justify-center hover:scale-105">
+            <i class="fa-solid fa-robot text-xl"></i>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+        </button>
+
+        <!-- Chatbot Window -->
+        <div id="chatWindow" class="hidden absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300">
+            <!-- Header Chatbot -->
+            <div class="bg-indigo-700 text-white p-3.5 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-white/20 p-1.5 rounded-lg">
+                        <i class="fa-solid fa-headset text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs">Asisten AI Laporan Sekolah</h4>
+                        <p class="text-[10px] text-indigo-200">Online | Siap Membantu 24/7</p>
+                    </div>
+                </div>
+                <button onclick="toggleChatbot()" class="text-indigo-200 hover:text-white text-sm px-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Messages Log -->
+            <div id="chatLogs" class="p-3.5 h-64 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+                <div class="flex gap-2 items-start">
+                    <div class="bg-indigo-600 text-white p-1.5 rounded-full text-[10px]">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm text-slate-700 max-w-[80%]">
+                        Halo! Saya Asisten AI FindIt. Ada yang bisa saya bantu terkait barang hilang atau lokasi pengambilan di ruang BK?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <form onsubmit="sendChatMessage(event)" class="p-2 bg-white border-t border-slate-200 flex gap-1.5">
+                <input type="text" id="chatInput" placeholder="Tanya AI (mis: di mana ruang BK?)..." class="flex-grow px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="submit" class="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detail & Klaim -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="modalContent">
+                <!-- Injected content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p>© 2026 Prototipe Web Laporan Barang Hilang Sekolah Berbasis AI. Dibuat untuk Tugas Siswa SMA.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript File -->
+    <script src="script.js"></script>
+</body>
+</html>
